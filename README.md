@@ -9,17 +9,21 @@ https://aws.amazon.com/resources/create-account/
 2. IAM user with admin or EKS full permissions
 
 3.AWS CLI installed & configured
+
 https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
 
 aws configure
 
 4.kubectl installed
+
 https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/
 
 5.eksctl installed
+
 https://docs.aws.amazon.com/eks/latest/eksctl/installation.html
 
 6.argocd CLI installed
+
 https://argo-cd.readthedocs.io/en/stable/cli_installation/
 
 7.SSH key pair for nodes
@@ -33,7 +37,9 @@ https://argo-cd.readthedocs.io/en/stable/cli_installation/
 10. Allow ArgoCD UI access
 
 **Phase 1 — Create EKS Clusters (HUB + SPOKEs)**
+
 **1. Create HUB EKS cluster**
+
 eksctl create cluster \
   --name HUB \
   --region ap-south-1 \
@@ -58,41 +64,70 @@ eksctl create cluster \
 (Same command with different name)
 
 **3. Create SPOKE-02 cluster**
+
 (Same command with different name)
 
 **Phase 2 — Configure kubectl Contexts**
+
 1. **List available contexts**
+
+   kubectl config get-contexts
+2.**Switch to HUB context**
+
+kubectl config use-context Badhri@HUB.ap-south-1.eksctl.io
+
+**Phase 3 — Install ArgoCD on HUB Cluster**
+
+1. **Create namespace**
+
    kubectl create namespace argocd
+   
 2. **Install ArgoCD**
+   
    kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+   
 3. **Wait for pods**
+   
    kubectl get pods -n argocd
    
 **Phase 4 — Expose ArgoCD UI**
+
 1. **Edit ArgoCD configmap to enable insecure mode**
+   
    kubectl edit cm argocd-cmd-params-cm -n argocd
-ADD: data:
-      server.insecure: "true"
+           ADD: data:
+                 server.insecure: "true"
+   
 2. **Convert ArgoCD server service → NodePort**
    kubectl edit svc argocd-server -n argocd
    Change:
    type: ClusterIP → NodePort
+   
 3. **Allow NodePort in SG**
 
 4. **Retrieve initial admin password**
+   
    kubectl get secret argocd-initial-admin-secret -n argocd -o yaml
-echo <base64-value> | base64 --decode
+   echo <base64-value> | base64 --decode
+   
 5. **Login to ArgoCD using browser**
+
    https://<NodeIP>:<NodePort>
+   
 **Phase 5 — Setup ArgoCD CLI**
+
 **Login via CLI**
+
 argocd login <ARGOCD-IP:PORT>
 
 **Phase 6 — Add SPOKE Clusters to HUB ArgoCD**
 
 **Add SPOKE-01**
+
 argocd cluster add Badhri@SPOKE-01.ap-south-1.eksctl.io --server <ARGOCD-IP:PORT>
+
 **Add SPOKE-02**
+
 argocd cluster add Badhri@SPOKE-02.ap-south-1.eksctl.io --server <ARGOCD-IP:PORT>
 
 ArgoCD automatically:
