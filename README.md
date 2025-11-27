@@ -72,6 +72,7 @@ eksctl create cluster \
 1. **List available contexts**
 
    kubectl config get-contexts
+   
 2.**Switch to HUB context**
 
 kubectl config use-context Badhri@HUB.ap-south-1.eksctl.io
